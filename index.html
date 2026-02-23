@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>J3MPI Rental Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0e0e1c;--bg2:#181828;--bg3:#1e1e30;--border:#2a2a40;
+  --gold:#c8a96e;--text:#cdd0e8;--dim:#6a6a88;--mid:#9898b8;
+  --green:#3cb371;--red:#e05555;--yellow:#d4a017;
+  --sidebar:210px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:14px}
+.hidden{display:none!important}
+img{max-width:100%}
+
+/* ── Login ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{width:80px;height:80px;object-fit:contain;border-radius:12px;display:block;margin:0 auto 16px}
+.login-box h1{color:var(--gold);font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
+.login-box p{color:var(--dim);text-align:center;margin-bottom:24px;font-size:13px}
+.err-box{background:#200a0a;border:1px solid #5a1a1a;color:var(--red);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px}
+
+/* ── App shell ── */
+.app{display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:var(--sidebar);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s ease}
+.s-logo{padding:14px 16px;border-bottom:1px solid var(--border);text-align:center}
+.s-logo img{width:100%;max-height:65px;object-fit:contain;border-radius:8px}
+.s-user{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#000;font-size:13px;flex-shrink:0}
+.u-name{font-weight:600;font-size:13px}
+.u-role{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.s-nav{flex:1;padding:10px 8px;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;cursor:pointer;color:var(--dim);font-size:13px;margin-bottom:2px;user-select:none;transition:all .15s}
+.nav-item:hover,.nav-item:active{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:rgba(200,169,110,.12);color:var(--gold);font-weight:600}
+.s-foot{padding:14px;border-top:1px solid var(--border)}
+
+/* ── Top bar (mobile) ── */
+.topbar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--bg2);border-bottom:1px solid var(--border);align-items:center;padding:0 16px;z-index:150;gap:12px}
+.topbar-logo{height:34px;width:34px;object-fit:contain;border-radius:6px}
+.topbar-title{color:var(--gold);font-weight:700;font-size:15px;flex:1}
+.hamburger{background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px;line-height:1}
+
+/* ── Overlay ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190}
+.overlay.show{display:block}
+
+/* ── Main ── */
+.main{flex:1;margin-left:var(--sidebar);min-height:100vh;background:var(--bg)}
+.page{display:none;padding:24px 24px;max-width:1100px}
+.page.active{display:block}
+
+/* ── Page header ── */
+.ph{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.ph-title{font-size:22px;font-weight:700;color:var(--gold)}
+.ph-sub{font-size:12px;color:var(--dim);margin-top:3px}
+.ph-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ── Forms ── */
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none;-webkit-appearance:none;appearance:none}
+.fg input:focus,.fg select:focus{border-color:var(--gold)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:inherit;font-size:13px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer}
+
+/* ── Buttons ── */
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px;touch-action:manipulation}
+.btn:active{opacity:.75}
+.btn-gold{background:var(--gold);color:#000}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--mid)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+.btn-red{background:transparent;border:1px solid #5a1a1a;color:var(--red);padding:6px 12px;font-size:12px}
+
+/* ── Cards ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.card-head{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;border-bottom:1px solid var(--border)}
+
+/* ── KPIs ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.kpi-lbl{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:700;color:var(--gold);margin-bottom:3px}
+.kpi-sub{font-size:11px;color:var(--dim)}
+
+/* ── Monthly bars ── */
+.monthly-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px}
+.month-cell{background:var(--bg3);border-radius:8px;padding:10px}
+.mc-name{font-size:10px;font-weight:700;color:var(--mid);margin-bottom:6px;letter-spacing:1px}
+.mc-bar{height:5px;background:var(--bg);border-radius:3px;margin-bottom:5px;overflow:hidden}
+.mc-fill{height:100%;border-radius:3px;background:var(--gold)}
+.mc-nums{font-size:11px;color:var(--dim)}
+.mc-nums span{color:var(--text);font-weight:600}
+
+/* ── Property cards ── */
+.prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.prop-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;transition:border-color .2s}
+.prop-card:hover{border-color:var(--gold)}
+.pc-label{font-size:17px;font-weight:700;margin-bottom:4px}
+.pc-tenant{font-size:12px;color:var(--gold);margin-bottom:8px}
+.pc-detail{font-size:11px;color:var(--dim);margin-bottom:3px}
+.pc-rent{font-size:20px;font-weight:700;color:var(--gold);margin:12px 0 10px}
+.pc-acts{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dtbl{width:100%;border-collapse:collapse;min-width:500px}
+.dtbl th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--dim);text-transform:uppercase;background:rgba(26,26,40,.6);border-bottom:1px solid var(--border);white-space:nowrap}
+.dtbl td{padding:10px 14px;border-bottom:1px solid rgba(42,42,64,.4);vertical-align:middle}
+.dtbl tr:last-child td{border-bottom:none}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.b-paid{background:#0a1f12;border:1px solid #2a5a38;color:var(--green)}
+.b-partial{background:#1a1500;border:1px solid #5a4500;color:var(--yellow)}
+.b-unpaid{background:#1a0a0a;border:1px solid #5a2020;color:var(--red)}
+.b-admin{background:rgba(200,169,110,.12);border:1px solid rgba(200,169,110,.3);color:var(--gold)}
+.b-manager{background:rgba(150,150,200,.08);border:1px solid var(--border);color:var(--mid)}
+
+/* ── Payment input ── */
+.pay-in{width:90px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text);font-size:13px;outline:none}
+.pay-in:focus{border-color:var(--gold)}
+
+/* ── Settings ── */
+.set-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.set-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
+.set-sec{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.u-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);gap:8px}
+.u-row:last-child{border-bottom:none}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;justify-content:center;z-index:800;padding:0}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px 18px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-hdr h3{font-size:16px;color:var(--gold)}
+.modal-cls{background:none;border:none;color:var(--dim);cursor:pointer;font-size:20px;line-height:1;padding:4px}
+.modal-body{padding:20px}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.t-ok{background:#0a1f12;border:1px solid #2a5a38;color:var(--green)}
+.t-err{background:#1a0a0a;border:1px solid #5a2020;color:var(--red)}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:50px 20px;color:var(--dim)}
+.empty h3{font-size:15px;margin-bottom:8px;color:var(--mid)}
+
+hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  :root{--sidebar:0px}
+  .sidebar{transform:translateX(-260px);width:260px}
+  .sidebar.open{transform:translateX(0)}
+  .topbar{display:flex}
+  .main{margin-left:0;padding-top:52px}
+  .page{padding:16px 14px}
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .monthly-grid{grid-template-columns:repeat(3,1fr)}
+  .frow{grid-template-columns:1fr}
+  .set-grid{grid-template-columns:1fr}
+  .prop-grid{grid-template-columns:1fr}
+  .modal-bg{align-items:flex-end}
+  .modal{border-radius:18px 18px 0 0;max-height:85vh}
+}
+@media(max-width:400px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .monthly-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-page" class="login-page">
+  <div class="login-box">
+    <img src="/logo.png" class="login-logo" alt="J3MPI Logo">
+    <h1>J3MPI Rental</h1>
+    <p>Property Management System</p>
+    <div id="lerr" class="err-box hidden"></div>
+    <div class="fg"><label>Username</label><input id="lu" type="text" autocomplete="username" placeholder="Username"></div>
+    <div class="fg"><label>Password</label><input id="lp" type="password" autocomplete="current-password" placeholder="Password"></div>
+    <button id="lbtn" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Sign In</button>
+    <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--dim)">Default: admin / admin123</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" class="app hidden">
+
+  <!-- Mobile top bar -->
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+    <img src="/logo.png" class="topbar-logo" alt="">
+    <span class="topbar-title">J3MPI Rental</span>
+    <div class="avatar" id="av-top">A</div>
+  </div>
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="s-logo"><img src="/logo.png" alt="J3MPI Logo"></div>
+    <div class="s-user">
+      <div class="avatar" id="av">A</div>
+      <div><div class="u-name" id="uname">Admin</div><div class="u-role" id="urole">Administrator</div></div>
+    </div>
+    <nav class="s-nav">
+      <div class="nav-item active" data-p="dashboard"  onclick="go('dashboard')">&#128202; Dashboard</div>
+      <div class="nav-item"        data-p="properties" onclick="go('properties')">&#127968; Properties</div>
+      <div class="nav-item"        data-p="payments"   onclick="go('payments')">&#128179; Payments</div>
+      <div class="nav-item"        data-p="expenses"   onclick="go('expenses')">&#128203; Expenses</div>
+      <div class="nav-item"        data-p="leases"     onclick="go('leases')">&#128196; Leases</div>
+      <div class="nav-item"        data-p="taxreport"  onclick="go('taxreport')">&#128200; Tax Report</div>
+      <div class="nav-item"        data-p="emaillog"   onclick="go('emaillog')">&#128139; Email Log</div>
+      <div class="nav-item"        data-p="settings"   onclick="go('settings')">&#9881; Settings</div>
+    </nav>
+    <div class="s-foot">
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12px" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Dashboard -->
+    <div id="pg-dashboard" class="page active">
+      <div class="ph">
+        <div><div class="ph-title">Dashboard</div><div class="ph-sub" id="dash-sub">Annual Overview</div></div>
+        <div class="ph-right">
+          <select id="dash-yr" class="sel" onchange="loadDash()"></select>
+          <button class="btn btn-ghost" onclick="loadDash()">Refresh</button>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-lbl">Collected</div><div class="kpi-val" id="k-coll">$0</div><div class="kpi-sub" id="k-coll-s"></div></div>
+        <div class="kpi"><div class="kpi-lbl">Rent Due</div><div class="kpi-val" id="k-due">$0</div><div class="kpi-sub" id="k-due-s"></div></div>
+        <div class="kpi"><div class="kpi-lbl">Net Cash</div><div class="kpi-val" id="k-net">$0</div><div class="kpi-sub" id="k-net-s"></div></div>
+        <div class="kpi"><div class="kpi-lbl">This Month</div><div class="kpi-val" id="k-mo">-</div><div class="kpi-sub" id="k-mo-s"></div></div>
+      </div>
+      <div class="card"><div class="card-head">Monthly Collection</div><div id="monthly-grid" class="monthly-grid"></div></div>
+      <div class="card">
+        <div class="card-head">Property Summary</div>
+        <div class="tbl-wrap"><table class="dtbl">
+          <thead><tr><th>Property</th><th>Tenant</th><th>Due</th><th>Collected</th><th>Expenses</th><th>Net</th><th>Paid</th><th>This Month</th></tr></thead>
+          <tbody id="dash-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Properties -->
+    <div id="pg-properties" class="page">
+      <div class="ph">
+        <div><div class="ph-title">Properties</div><div class="ph-sub">Manage your portfolio</div></div>
+        <button class="btn btn-gold" onclick="openPropModal()">+ Add Property</button>
+      </div>
+      <div id="prop-grid" class="prop-grid"></div>
+    </div>
+
+    <!-- Payments -->
+    <div id="pg-payments" class="page">
+      <div class="ph">
+        <div><div class="ph-title">Payments</div><div class="ph-sub">Log rent payments</div></div>
+        <div class="ph-right">
+          <select id="pay-prop" class="sel" onchange="loadPayments()"><option value="">All Properties</option></select>
+          <select id="pay-yr"   class="sel" onchange="loadPayments()"></select>
+        </div>
+      </div>
+      <div id="pay-content"></div>
+    </div>
+
+    <!-- Expenses -->
+    <div id="pg-expenses" class="page">
+      <div class="ph">
+        <div><div class="ph-title">Expenses</div><div class="ph-sub">Track expenses</div></div>
+        <div class="ph-right">
+          <select id="exp-prop" class="sel"><option value="">Select Property</option></select>
+          <select id="exp-yr"   class="sel" onchange="loadExpenses()"></select>
+          <button class="btn btn-gold" onclick="openExpModal()">+ Add</button>
+        </div>
+      </div>
+      <div id="exp-content"></div>
+    </div>
+
+    <!-- Leases -->
+    <div id="pg-leases" class="page">
+      <div class="ph">
+        <div><div class="ph-title">Leases</div><div class="ph-sub">Track lease dates and renewals</div></div>
+        <button class="btn btn-gold" onclick="openLeaseModal()">+ Add Lease</button>
+      </div>
+      <div id="lease-alerts"></div>
+      <div class="card">
+        <div class="card-head">Active Leases</div>
+        <div class="tbl-wrap"><table class="dtbl">
+          <thead><tr><th>Property</th><th>Tenant</th><th>Start</th><th>End</th><th>Rent</th><th>Days Left</th><th>Status</th><th></th></tr></thead>
+          <tbody id="lease-tbody"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- Tax Report -->
+    <div id="pg-taxreport" class="page">
+      <div class="ph">
+        <div><div class="ph-title">Tax Report</div><div class="ph-sub">Annual income &amp; expense summary</div></div>
+        <div class="ph-right">
+          <select id="tax-yr" class="sel" onchange="loadTaxReport()"></select>
+          <button class="btn btn-gold" onclick="printTaxReport()">Print</button>
+        </div>
+      </div>
+      <div id="tax-content"></div>
+    </div>
+
+    <!-- Email Log -->
+    <div id="pg-emaillog" class="page">
+      <div class="ph"><div><div class="ph-title">Email Log</div><div class="ph-sub">Sent receipt history</div></div></div>
+      <div class="card"><div class="tbl-wrap"><table class="dtbl">
+        <thead><tr><th>Date</th><th>Property</th><th>Tenant</th><th>Sent To</th><th>Month</th><th>Amount</th></tr></thead>
+        <tbody id="elog-tbody"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="pg-settings" class="page">
+      <div class="ph"><div><div class="ph-title">Settings</div></div></div>
+      <div class="set-grid">
+        <div class="set-card">
+          <div class="set-sec">Landlord Info</div>
+          <div class="fg"><label>Business Name</label><input id="s-name"></div>
+          <div class="fg"><label>Email</label><input id="s-email" type="email"></div>
+          <div class="fg"><label>Phone</label><input id="s-phone"></div>
+          <div class="fg"><label>Address</label><input id="s-addr"></div>
+          <button class="btn btn-gold" onclick="saveInfo()">Save Info</button>
+        </div>
+        <div class="set-card" id="user-card">
+          <div class="set-sec">User Management</div>
+          <div id="user-list"></div>
+          <hr>
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--gold);margin-bottom:10px">ADD USER</div>
+          <div class="fg"><label>Username</label><input id="nu-name"></div>
+          <div class="fg"><label>Password</label><input id="nu-pass" type="password"></div>
+          <div class="fg"><label>Role</label>
+            <select id="nu-role"><option value="manager">Manager</option><option value="admin">Admin</option></select>
+          </div>
+          <button class="btn btn-gold" onclick="createUser()">Add User</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal -->
+<div id="modal-bg" class="modal-bg hidden" onclick="closeMbg(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="modal-title">-</h3>
+      <button class="modal-cls" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div id="modal-body" class="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+var MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var ME=null,PROPS=[],toastT=null;
+
+// ── API ───────────────────────────────────────────────────────
+async function api(method,url,body){
+  var opts={method:method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  var r=await fetch(url,opts);
+  return r.json();
+}
+var get = function(url){return api('GET',url);};
+var post= function(url,b){return api('POST',url,b);};
+var put = function(url,b){return api('PUT',url,b);};
+var del = function(url){return api('DELETE',url);};
+
+// ── Boot ──────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',async function(){
+  var u=await get('/api/me');
+  if(u){ME=u;startApp();}else showLogin();
+  document.getElementById('lp').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+});
+
+function showLogin(){
+  document.getElementById('login-page').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+  setTimeout(function(){document.getElementById('lu').focus();},100);
+}
+
+async function startApp(){
+  document.getElementById('login-page').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  var ini=ME.username[0].toUpperCase();
+  document.getElementById('av').textContent=ini;
+  document.getElementById('av-top').textContent=ini;
+  document.getElementById('uname').textContent=ME.username;
+  document.getElementById('urole').textContent=ME.role==='admin'?'Administrator':'Manager';
+  if(ME.role!=='admin')document.getElementById('user-card').style.display='none';
+  PROPS=await get('/api/properties');
+  fillYears();
+  go('dashboard');
+}
+
+// ── Auth ──────────────────────────────────────────────────────
+async function doLogin(){
+  var user=document.getElementById('lu').value.trim();
+  var pass=document.getElementById('lp').value;
+  var btn=document.getElementById('lbtn');
+  document.getElementById('lerr').classList.add('hidden');
+  if(!user||!pass){showErr('Enter username and password.');return;}
+  btn.disabled=true;btn.textContent='Signing in...';
+  var r=await post('/api/login',{username:user,password:pass});
+  btn.disabled=false;btn.textContent='Sign In';
+  if(r.ok){ME=r.user;startApp();}else showErr(r.msg);
+}
+function showErr(m){var e=document.getElementById('lerr');e.textContent=m;e.classList.remove('hidden');}
+async function doLogout(){await post('/api/logout');ME=null;showLogin();}
+
+// ── Sidebar ───────────────────────────────────────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── Nav ───────────────────────────────────────────────────────
+function go(page){
+  closeSidebar();
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  var pg=document.getElementById('pg-'+page);if(pg)pg.classList.add('active');
+  var ni=document.querySelector('[data-p="'+page+'"]');if(ni)ni.classList.add('active');
+  if(page==='dashboard')loadDash();
+  if(page==='properties')renderProps();
+  if(page==='payments'){fillPropSels();loadPayments();}
+  if(page==='expenses'){fillPropSels();loadExpenses();}
+  if(page==='leases')loadLeases();
+  if(page==='taxreport'){fillTaxYears();loadTaxReport();}
+  if(page==='emaillog')loadElog();
+  if(page==='settings')loadSettings();
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function fillYears(){
+  var yr=new Date().getFullYear();
+  ['dash-yr','pay-yr','exp-yr'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    el.innerHTML=[yr-1,yr,yr+1].map(function(y){return'<option value="'+y+'"'+(y===yr?' selected':'')+'>'+y+'</option>';}).join('');
+  });
+}
+function fillTaxYears(){
+  var yr=new Date().getFullYear();
+  var el=document.getElementById('tax-yr');if(!el)return;
+  el.innerHTML=[yr-2,yr-1,yr].map(function(y){return'<option value="'+y+'"'+(y===yr?' selected':'')+'>'+y+'</option>';}).join('');
+}
+function fillPropSels(){
+  ['pay-prop','exp-prop'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    var cur=el.value;
+    var ph=id==='pay-prop'?'<option value="">All Properties</option>':'<option value="">Select Property</option>';
+    el.innerHTML=ph+PROPS.map(function(p){return'<option value="'+p.id+'">'+esc(p.label)+' - '+esc(p.tenant_name||'No tenant')+'</option>';}).join('');
+    if(cur)el.value=cur;
+  });
+}
+function fmt(n){return'$'+(parseFloat(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function vemail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());}
+function toast(msg,ok){
+  var el=document.getElementById('toast');
+  el.textContent=(ok?'✓ ':'✗ ')+msg;
+  el.className='toast '+(ok?'t-ok':'t-err');
+  el.classList.remove('hidden');
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){el.classList.add('hidden');},4000);
+}
+function openModal(title,html){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function closeModal(){document.getElementById('modal-bg').classList.add('hidden');document.getElementById('modal-body').innerHTML='';}
+function closeMbg(e){if(e.target===document.getElementById('modal-bg'))closeModal();}
+
+// ── Dashboard ─────────────────────────────────────────────────
+async function loadDash(){
+  var yr=parseInt(document.getElementById('dash-yr').value)||new Date().getFullYear();
+  document.getElementById('dash-sub').textContent=yr+' Annual Overview';
+  var data=await get('/api/dashboard?year='+yr);
+  var tC=0,tD=0,tN=0,tE=0;
+  data.properties.forEach(function(p){tC+=p.tRecv;tD+=p.tDue;tN+=p.net;tE+=p.tExp;});
+  var mo=new Date().getMonth();
+  var paidMo=data.properties.filter(function(p){return p.months[mo]&&p.months[mo].status==='paid';}).length;
+  document.getElementById('k-coll').textContent=fmt(tC);
+  document.getElementById('k-coll-s').textContent='of '+fmt(tD)+' due';
+  document.getElementById('k-due').textContent=fmt(tD);
+  document.getElementById('k-due-s').textContent=data.properties.length+' properties';
+  document.getElementById('k-net').textContent=fmt(tN);
+  document.getElementById('k-net-s').textContent='after '+fmt(tE)+' expenses';
+  document.getElementById('k-mo').textContent=paidMo+'/'+data.properties.length;
+  document.getElementById('k-mo-s').textContent='paid in '+MN[mo];
+  document.getElementById('monthly-grid').innerHTML=data.monthly.map(function(m){
+    var pct=m.due>0?Math.min(100,Math.round((m.collected/m.due)*100)):0;
+    return'<div class="month-cell"><div class="mc-name">'+MN[m.month-1].slice(0,3).toUpperCase()+'</div>'
+      +'<div class="mc-bar"><div class="mc-fill" style="width:'+pct+'%"></div></div>'
+      +'<div class="mc-nums"><span>'+fmt(m.collected)+'</span><br>/ '+fmt(m.due)+'</div></div>';
+  }).join('');
+  var tbody=document.getElementById('dash-tbody');
+  tbody.innerHTML=!data.properties.length
+    ?'<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--dim)">No properties yet</td></tr>'
+    :data.properties.map(function(p){
+      var ms=p.months[mo]?p.months[mo].status:'unpaid';
+      var b=ms==='paid'?'<span class="badge b-paid">Paid</span>':ms==='partial'?'<span class="badge b-partial">Partial</span>':'<span class="badge b-unpaid">Unpaid</span>';
+      return'<tr><td><strong>'+esc(p.label)+'</strong></td><td>'+esc(p.tenant_name||'--')+'</td>'
+        +'<td>'+fmt(p.tDue)+'</td><td>'+fmt(p.tRecv)+'</td><td>'+fmt(p.tExp)+'</td><td>'+fmt(p.net)+'</td>'
+        +'<td>'+p.paid+'/12</td><td>'+b+'</td></tr>';
+    }).join('');
+}
+
+// ── Properties ────────────────────────────────────────────────
+function renderProps(){
+  var g=document.getElementById('prop-grid');
+  if(!PROPS.length){g.innerHTML='<div class="empty"><h3>No properties yet</h3><p>Click + Add Property</p></div>';return;}
+  g.innerHTML=PROPS.map(function(p){
+    return'<div class="prop-card"><div class="pc-label">'+esc(p.label)+'</div>'
+      +'<div class="pc-tenant">Tenant: '+esc(p.tenant_name||'None')+'</div>'
+      +'<div class="pc-detail">Email: '+esc(p.tenant_email||'--')+'</div>'
+      +'<div class="pc-detail">Address: '+esc(p.address||'None')+'</div>'
+      +'<div class="pc-rent">'+fmt(p.base_rent)+'/mo</div>'
+      +'<div class="pc-acts"><button class="btn btn-ghost" onclick="openPropModal('+p.id+')">Edit</button>'
+      +'<button class="btn btn-red" onclick="delProp('+p.id+')">Delete</button></div></div>';
+  }).join('');
+}
+
+function openPropModal(id){
+  var p=id?PROPS.find(function(x){return x.id===id;}):null;
+  var html='<div class="frow"><div class="fg"><label>Property ID</label><input id="pm-name" value="'+esc(p?p.name:'')+'"></div>'
+    +'<div class="fg"><label>Display Label</label><input id="pm-label" value="'+esc(p?p.label:'')+'"></div></div>'
+    +'<div class="fg"><label>Address</label><input id="pm-addr" value="'+esc(p?p.address||'':'')+'"></div>'
+    +'<div class="fg"><label>Monthly Rent ($)</label><input id="pm-rent" type="number" step="0.01" value="'+(p?p.base_rent:'')+'"></div>'
+    +'<hr><div class="fg"><label>Tenant Name</label><input id="pm-tname" value="'+esc(p?p.tenant_name||'':'')+'"></div>'
+    +'<div class="frow"><div class="fg"><label>Tenant Email</label><input id="pm-temail" type="email" value="'+esc(p?p.tenant_email||'':'')+'"></div>'
+    +'<div class="fg"><label>Tenant Phone</label><input id="pm-tphone" value="'+esc(p?p.tenant_phone||'':'')+'"></div></div>'
+    +'<button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px" onclick="saveProp('+(id||'null')+','+(p&&p.tenant_id?p.tenant_id:'null')+')">'+(p?'Save Changes':'Create Property')+'</button>';
+  openModal(p?'Edit Property':'Add Property',html);
+}
+
+async function saveProp(id,tid){
+  var name=document.getElementById('pm-name').value.trim();
+  var label=document.getElementById('pm-label').value.trim()||name;
+  var addr=document.getElementById('pm-addr').value.trim();
+  var rent=parseFloat(document.getElementById('pm-rent').value);
+  var tname=document.getElementById('pm-tname').value.trim();
+  var temail=document.getElementById('pm-temail').value.trim();
+  var tphone=document.getElementById('pm-tphone').value.trim();
+  if(!name||!rent||!tname||!temail){toast('Fill in all required fields.',false);return;}
+  if(!vemail(temail)){toast('Enter a valid email.',false);return;}
+  var r;
+  if(id) r=await put('/api/properties/'+id,{name,label,address:addr,base_rent:rent,tenant_name:tname,tenant_email:temail,tenant_phone:tphone,tenant_id:tid});
+  else   r=await post('/api/properties',{name,label,address:addr,base_rent:rent,tenant_name:tname,tenant_email:temail,tenant_phone:tphone});
+  if(r.ok){closeModal();PROPS=await get('/api/properties');renderProps();fillPropSels();toast(id?'Updated!':'Created!',true);}
+  else toast(r.msg||'Failed.',false);
+}
+
+async function delProp(id){
+  var p=PROPS.find(function(x){return x.id===id;});
+  if(!confirm('Delete "'+((p&&p.label)||'this property')+'" and all data?'))return;
+  await del('/api/properties/'+id);
+  PROPS=await get('/api/properties');renderProps();toast('Deleted.',true);
+}
+
+// ── Payments ──────────────────────────────────────────────────
+async function loadPayments(){
+  var propId=parseInt(document.getElementById('pay-prop').value)||null;
+  var year=parseInt(document.getElementById('pay-yr').value)||new Date().getFullYear();
+  var wrap=document.getElementById('pay-content');
+  var list=propId?PROPS.filter(function(p){return p.id===propId;}):PROPS;
+  if(!list.length){wrap.innerHTML='<div class="empty"><h3>No properties found</h3></div>';return;}
+  wrap.innerHTML='';
+  for(var i=0;i<list.length;i++){
+    var prop=list[i];
+    var pays=await get('/api/payments?property_id='+prop.id+'&year='+year);
+    var rows=MN.map(function(mon,mi){
+      var p=pays.find(function(x){return x.month===mi+1;});
+      var due=Number(p?p.rent_due:prop.base_rent);
+      var recv=Number(p?p.rent_received:0);
+      var late=Number(p?p.late_fee:0);
+      var st=(recv>=due&&recv>0)?'paid':(recv>0)?'partial':'unpaid';
+      return'<tr><td style="font-weight:600">'+mon+'</td><td>'+fmt(due)+'</td>'
+        +'<td><input class="pay-in" id="r-'+prop.id+'-'+(mi+1)+'" type="number" step="0.01" value="'+(recv||'')+'" placeholder="0.00"></td>'
+        +'<td><input class="pay-in" id="l-'+prop.id+'-'+(mi+1)+'" type="number" step="0.01" value="'+(late||'')+'" placeholder="0.00"></td>'
+        +'<td><span class="badge b-'+st+'">'+(st==='paid'?'Paid':st==='partial'?'Partial':'Unpaid')+'</span></td>'
+        +'<td><button class="btn btn-gold" style="padding:5px 10px;font-size:11px" onclick="savePayRow('+prop.id+','+prop.tenant_id+','+(mi+1)+','+year+','+due+')">Save</button> '
+        +'<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="sendRcpt('+prop.id+','+prop.tenant_id+','+(mi+1)+','+year+')">Email</button></td></tr>';
+    }).join('');
+    var sec=document.createElement('div');sec.className='card';sec.style.marginBottom='16px';
+    sec.innerHTML='<div class="card-head">'+esc(prop.label)+' - '+esc(prop.tenant_name||'--')+' - '+year+'</div>'
+      +'<div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Month</th><th>Due</th><th>Received</th><th>Late Fee</th><th>Status</th><th>Actions</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>';
+    wrap.appendChild(sec);
+  }
+}
+
+async function savePayRow(pid,tid,month,year,due){
+  var recv=parseFloat(document.getElementById('r-'+pid+'-'+month).value)||0;
+  var late=parseFloat(document.getElementById('l-'+pid+'-'+month).value)||0;
+  var r=await post('/api/payments',{property_id:pid,tenant_id:tid,month,year,rent_due:due,rent_received:recv,late_fee:late,notes:''});
+  if(r.ok){toast('Saved for '+MN[month-1]+'.',true);loadPayments();}else toast(r.msg,false);
+}
+
+async function sendRcpt(pid,tid,month,year){
+  var r=await post('/api/email-receipt',{property_id:pid,tenant_id:tid,month,year});
+  if(r.ok){window.open(r.gmailUrl,'_blank');toast(r.msg,true);}else toast(r.msg,false);
+}
+
+// ── Expenses ──────────────────────────────────────────────────
+async function loadExpenses(){
+  var propId=parseInt(document.getElementById('exp-prop').value);
+  var year=parseInt(document.getElementById('exp-yr').value)||new Date().getFullYear();
+  var wrap=document.getElementById('exp-content');
+  if(!propId){wrap.innerHTML='<div class="empty"><h3>Select a property above</h3></div>';return;}
+  var exps=await get('/api/expenses?property_id='+propId+'&year='+year);
+  if(!exps.length){wrap.innerHTML='<div class="empty"><h3>No expenses logged</h3><p>Click + Add</p></div>';return;}
+  var total=exps.reduce(function(s,e){return s+Number(e.amount);},0);
+  wrap.innerHTML='<div class="card"><div class="card-head">Expenses '+year+' - Total: '+fmt(total)+'</div>'
+    +'<div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Month</th><th>Category</th><th>Description</th><th>Amount</th><th>Date</th><th></th></tr></thead>'
+    +'<tbody>'+exps.map(function(e){
+      return'<tr><td>'+MN[Number(e.month)-1]+'</td><td>'+esc(e.category)+'</td><td>'+esc(e.description||'--')+'</td>'
+        +'<td>'+fmt(e.amount)+'</td><td style="color:var(--dim)">'+esc(e.expense_date||'--')+'</td>'
+        +'<td><button class="btn btn-red" onclick="delExp('+e.id+')">Del</button></td></tr>';
+    }).join('')+'</tbody></table></div></div>';
+}
+
+function openExpModal(){
+  var propId=parseInt(document.getElementById('exp-prop').value);
+  if(!propId){toast('Select a property first.',false);return;}
+  var prop=PROPS.find(function(p){return p.id===propId;});
+  var mo=new Date().getMonth();
+  var cats=['Sewer','Trash','Water','Electric','Gas','Repairs','Handyman','Materials','Landscaping','Insurance','Property Tax','Pest Control','Other'];
+  var html='<div class="frow"><div class="fg"><label>Month</label><select id="em-mo">'+MN.map(function(m,i){return'<option value="'+(i+1)+'"'+(i===mo?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div>'
+    +'<div class="fg"><label>Amount ($)</label><input id="em-amt" type="number" step="0.01"></div></div>'
+    +'<div class="fg"><label>Category</label><select id="em-cat" onchange="document.getElementById(\'em-desc\').value=this.value!==\'Other\'?this.value:\'\'">'
+    +'<option value="">-- select --</option>'+cats.map(function(c){return'<option>'+c+'</option>';}).join('')+'</select></div>'
+    +'<div class="fg"><label>Description</label><input id="em-desc"></div>'
+    +'<button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px" onclick="saveExp('+propId+')">Log Expense</button>';
+  openModal('Add Expense - '+esc(prop?prop.label:''),html);
+}
+
+async function saveExp(pid){
+  var month=parseInt(document.getElementById('em-mo').value);
+  var year=parseInt(document.getElementById('exp-yr').value)||new Date().getFullYear();
+  var amt=parseFloat(document.getElementById('em-amt').value);
+  var cat=document.getElementById('em-cat').value;
+  var desc=document.getElementById('em-desc').value.trim()||cat;
+  if(!month||!amt||!cat){toast('Fill all fields.',false);return;}
+  var r=await post('/api/expenses',{property_id:pid,month,year,amount:amt,category:cat,description:desc});
+  if(r.ok){closeModal();loadExpenses();toast('Expense logged.',true);}else toast(r.msg,false);
+}
+
+async function delExp(id){
+  if(!confirm('Delete this expense?'))return;
+  await del('/api/expenses/'+id);loadExpenses();toast('Deleted.',true);
+}
+
+// ── Leases ────────────────────────────────────────────────────
+async function loadLeases(){
+  var leases=await get('/api/leases');
+  var alerts=await get('/api/leases/alerts');
+  var today=new Date();
+  var alertBox=document.getElementById('lease-alerts');
+  if(alerts.length){
+    alertBox.innerHTML='<div style="background:#1a1000;border:1px solid #b8860b;border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#d4a017">'
+      +'<strong>Lease Renewal Alerts</strong><br><br>'
+      +alerts.map(function(a){
+        var days=Math.ceil((new Date(a.end_date)-today)/(1000*60*60*24));
+        return'- '+esc(a.prop_label)+' / '+esc(a.tenant_name)+' expires '+a.end_date+' ('+days+' days)';
+      }).join('<br>')+'</div>';
+  }else alertBox.innerHTML='';
+  var tbody=document.getElementById('lease-tbody');
+  if(!leases.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--dim)">No leases yet</td></tr>';return;}
+  tbody.innerHTML=leases.map(function(l){
+    var daysLeft=l.end_date?Math.ceil((new Date(l.end_date)-today)/(1000*60*60*24)):null;
+    var badge=!l.end_date?'<span class="badge" style="background:var(--bg3);border:1px solid var(--border);color:var(--dim)">No Lease</span>'
+      :daysLeft<0?'<span class="badge b-unpaid">Expired</span>'
+      :daysLeft<=60?'<span class="badge b-partial">Expiring Soon</span>'
+      :'<span class="badge b-paid">Active</span>';
+    return'<tr><td><strong>'+esc(l.prop_label)+'</strong></td><td>'+esc(l.name)+'</td>'
+      +'<td>'+(l.start_date||'--')+'</td><td>'+(l.end_date||'--')+'</td>'
+      +'<td>'+(l.rent_amount?fmt(l.rent_amount):'--')+'</td>'
+      +'<td>'+(daysLeft!==null?(daysLeft<0?Math.abs(daysLeft)+' ago':daysLeft+' days'):'--')+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="openLeaseModal('+l.id+','+l.property_id+')">Edit</button></td></tr>';
+  }).join('');
+}
+
+function openLeaseModal(tenantId,propId){
+  var prop=propId?PROPS.find(function(p){return p.id===propId;}):null;
+  var html='<div class="fg"><label>Property</label><select id="lm-prop" onchange="updateTenantForLease(this.value)">'
+    +'<option value="">-- Select Property --</option>'
+    +PROPS.map(function(p){return'<option value="'+p.id+'"'+(propId&&p.id===propId?' selected':'')+'>'+esc(p.label)+' - '+esc(p.tenant_name||'No tenant')+'</option>';}).join('')
+    +'</select></div>'
+    +'<input type="hidden" id="lm-tid" value="'+(tenantId||'')+'">'
+    +'<div class="frow"><div class="fg"><label>Start Date</label><input id="lm-start" type="date"></div>'
+    +'<div class="fg"><label>End Date</label><input id="lm-end" type="date"></div></div>'
+    +'<div class="fg"><label>Monthly Rent ($)</label><input id="lm-rent" type="number" step="0.01"'+(prop?' value="'+prop.base_rent+'"':'')+' placeholder="0.00"></div>'
+    +'<div class="fg"><label>Notes</label><input id="lm-notes" placeholder="e.g. Month-to-month, pet deposit..."></div>'
+    +'<button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px" onclick="saveLease()">Save Lease</button>';
+  openModal('Add / Update Lease',html);
+}
+
+function updateTenantForLease(propId){
+  var prop=PROPS.find(function(p){return p.id===parseInt(propId);});
+  if(prop&&prop.tenant_id){document.getElementById('lm-tid').value=prop.tenant_id;
+    if(prop.base_rent&&!document.getElementById('lm-rent').value)document.getElementById('lm-rent').value=prop.base_rent;}
+}
+
+async function saveLease(){
+  var propId=parseInt(document.getElementById('lm-prop').value);
+  var tid=parseInt(document.getElementById('lm-tid').value);
+  var start=document.getElementById('lm-start').value;
+  var end=document.getElementById('lm-end').value;
+  var rent=parseFloat(document.getElementById('lm-rent').value)||0;
+  var notes=document.getElementById('lm-notes').value.trim();
+  if(!propId||!tid){toast('Select a property.',false);return;}
+  if(!start||!end){toast('Enter start and end dates.',false);return;}
+  if(end<=start){toast('End date must be after start.',false);return;}
+  var r=await post('/api/leases',{tenant_id:tid,property_id:propId,start_date:start,end_date:end,rent_amount:rent,notes});
+  if(r.ok){closeModal();loadLeases();toast('Lease saved.',true);}else toast(r.msg||'Failed.',false);
+}
+
+// ── Tax Report ────────────────────────────────────────────────
+async function loadTaxReport(){
+  var yr=parseInt(document.getElementById('tax-yr').value)||new Date().getFullYear();
+  var data=await get('/api/taxreport?year='+yr);
+  var wrap=document.getElementById('tax-content');
+  var html='<div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">'
+    +'<div class="kpi"><div class="kpi-lbl">Gross Income</div><div class="kpi-val" style="color:var(--green)">'+fmt(data.grandIncome)+'</div><div class="kpi-sub">Rent + late fees</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Total Expenses</div><div class="kpi-val" style="color:var(--red)">'+fmt(data.grandExp)+'</div><div class="kpi-sub">All properties</div></div>'
+    +'<div class="kpi"><div class="kpi-lbl">Net Income</div><div class="kpi-val" style="color:'+(data.grandNet>=0?'var(--green)':'var(--red)')+'">'+fmt(data.grandNet)+'</div><div class="kpi-sub">'+yr+' taxable income</div></div>'
+    +'</div>';
+  html+='<div class="card" style="margin-bottom:16px"><div class="card-head">Income by Property</div>'
+    +'<div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Property</th><th>Tenant</th><th>Rent</th><th>Late Fees</th><th>Gross</th><th>Expenses</th><th>Net</th></tr></thead><tbody>'
+    +data.properties.map(function(p){
+      return'<tr><td><strong>'+esc(p.label)+'</strong></td><td>'+esc(p.tenant_name||'--')+'</td>'
+        +'<td style="color:var(--green)">'+fmt(p.totalRecv)+'</td><td style="color:var(--yellow)">'+fmt(p.totalLate)+'</td>'
+        +'<td><strong>'+fmt(p.grossIncome)+'</strong></td><td style="color:var(--red)">'+fmt(p.totalExp)+'</td>'
+        +'<td style="color:'+(p.netIncome>=0?'var(--green)':'var(--red)')+'"><strong>'+fmt(p.netIncome)+'</strong></td></tr>';
+    }).join('')
+    +'<tr style="background:rgba(200,169,110,.06)"><td colspan="2"><strong>TOTAL</strong></td>'
+    +'<td><strong>'+fmt(data.properties.reduce(function(s,p){return s+p.totalRecv;},0))+'</strong></td>'
+    +'<td><strong>'+fmt(data.properties.reduce(function(s,p){return s+p.totalLate;},0))+'</strong></td>'
+    +'<td><strong>'+fmt(data.grandIncome)+'</strong></td>'
+    +'<td><strong>'+fmt(data.grandExp)+'</strong></td>'
+    +'<td style="color:'+(data.grandNet>=0?'var(--green)':'var(--red)')+'"><strong>'+fmt(data.grandNet)+'</strong></td></tr>'
+    +'</tbody></table></div></div>';
+  if(data.allCategories.length){
+    html+='<div class="card"><div class="card-head">Expenses by Category</div>'
+      +'<div class="tbl-wrap"><table class="dtbl"><thead><tr><th>Category</th><th>Total</th><th>% of Expenses</th></tr></thead><tbody>'
+      +data.allCategories.map(function(c){
+        var pct=data.grandExp>0?Math.round((Number(c.total)/data.grandExp)*100):0;
+        return'<tr><td>'+esc(c.category)+'</td><td style="color:var(--red)">'+fmt(c.total)+'</td>'
+          +'<td><div style="display:flex;align-items:center;gap:8px">'
+          +'<div style="flex:1;height:5px;background:var(--bg3);border-radius:3px"><div style="width:'+pct+'%;height:100%;background:var(--red);border-radius:3px"></div></div>'
+          +'<span style="font-size:11px;color:var(--dim);width:28px">'+pct+'%</span></div></td></tr>';
+      }).join('')+'</tbody></table></div></div>';
+  }
+  wrap.innerHTML=html;
+}
+
+function printTaxReport(){
+  var yr=parseInt(document.getElementById('tax-yr').value)||new Date().getFullYear();
+  var content=document.getElementById('tax-content').innerHTML;
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>J3MPI Tax Report '+yr+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;font-size:13px;padding:24px;color:#222}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:20px}'
+    +'th{background:#1a1a2e;color:#c8a96e;padding:10px 14px;text-align:left;font-size:11px}'
+    +'td{padding:10px 14px;border-bottom:1px solid #eee}'
+    +'.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}'
+    +'.kpi{border:1px solid #ddd;border-radius:8px;padding:16px}'
+    +'.kpi-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}'
+    +'.kpi-val{font-size:22px;font-weight:bold;margin-bottom:3px}'
+    +'.kpi-sub{font-size:11px;color:#888}'
+    +'.card{border:1px solid #ddd;border-radius:8px;margin-bottom:16px;overflow:hidden}'
+    +'.card-head{background:#f5f5f5;padding:10px 16px;font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;border-bottom:1px solid #ddd}'
+    +'</style></head><body>'
+    +'<h2 style="color:#1a1a2e;margin-bottom:4px">J3MPI Property Management</h2>'
+    +'<p style="color:#888;margin-bottom:20px">Annual Tax Report — '+yr+' | Printed: '+new Date().toLocaleDateString()+'</p>'
+    +content+'</body></html>');
+  w.document.close();w.print();
+}
+
+// ── Email Log ─────────────────────────────────────────────────
+async function loadElog(){
+  var log=await get('/api/email-log');
+  var tbody=document.getElementById('elog-tbody');
+  if(!log.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--dim)">No emails sent yet</td></tr>';return;}
+  tbody.innerHTML=log.map(function(e){
+    return'<tr><td style="font-size:11px;color:var(--dim)">'+(e.sent_at||'--').slice(0,16)+'</td>'
+      +'<td>'+esc(e.prop_label||'--')+'</td><td>'+esc(e.ten_name||'--')+'</td>'
+      +'<td style="font-size:11px;color:var(--dim)">'+esc(e.to_email||'--')+'</td>'
+      +'<td>'+(e.month?MN[Number(e.month)-1]:'--')+'</td>'
+      +'<td>'+(e.amount?fmt(e.amount):'--')+'</td></tr>';
+  }).join('');
+}
+
+// ── Settings ──────────────────────────────────────────────────
+async function loadSettings(){
+  var s=await get('/api/settings');
+  document.getElementById('s-name').value=s.ll_name||'';
+  document.getElementById('s-email').value=s.ll_email||'';
+  document.getElementById('s-phone').value=s.ll_phone||'';
+  document.getElementById('s-addr').value=s.ll_addr||'';
+  if(ME&&ME.role==='admin')loadUsers();
+}
+async function saveInfo(){
+  var r=await post('/api/settings',{ll_name:document.getElementById('s-name').value,ll_email:document.getElementById('s-email').value,ll_phone:document.getElementById('s-phone').value,ll_addr:document.getElementById('s-addr').value});
+  if(r.ok)toast('Info saved.',true);
+}
+async function loadUsers(){
+  var users=await get('/api/users');
+  document.getElementById('user-list').innerHTML=users.map(function(u){
+    return'<div class="u-row"><strong>'+esc(u.username)+'</strong>'
+      +'<span class="badge b-'+u.role+'">'+u.role+'</span>'
+      +(u.id!==ME.id?'<button class="btn btn-red" onclick="delUser('+u.id+',\''+esc(u.username)+'\')">Remove</button>':'<span style="font-size:11px;color:var(--dim)">you</span>')
+      +'</div>';
+  }).join('');
+}
+async function createUser(){
+  var name=document.getElementById('nu-name').value.trim();
+  var pass=document.getElementById('nu-pass').value;
+  var role=document.getElementById('nu-role').value;
+  if(!name||!pass){toast('Username and password required.',false);return;}
+  var r=await post('/api/users',{username:name,password:pass,role});
+  if(r.ok){toast('User created.',true);document.getElementById('nu-name').value='';document.getElementById('nu-pass').value='';loadUsers();}
+  else toast(r.msg,false);
+}
+async function delUser(id,name){
+  if(!confirm('Remove "'+name+'"?'))return;
+  var r=await del('/api/users/'+id);
+  if(r.ok){toast('Removed.',true);loadUsers();}else toast(r.msg,false);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "j3mpi-web",
+  "version": "1.0.0",
+  "description": "J3MPI Rental Manager - Web Version",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "sql.js": "^1.12.0",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3"
+  }
+}
